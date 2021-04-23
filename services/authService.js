@@ -1,42 +1,59 @@
 const User = require('../models/User');
-const { registerValidation,
-    loginValidation } = require('../validators/userValidator');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const {
+    registerValidation,
+    loginValidation
+} = require('../validators/userValidator');
+
+// App constants
+const { SECRET_KEY } = require('../config');
 
 
 const registerUser = async (req, res) => {
     //TODO use Logs
-    //TODO mudar nrs de httpstatus para enum
-
-    // Validate fields in the request body
-    const {error} = registerValidation(req.body);
-    if (error) return res.status(400).send(error.details[0].message);
-
-    // Hash the password
-    const salt = await bcrypt.genSalt(10);  // generate string (with complexity = 10) to hash the password
-    const hashedPassword = await bcrypt.hash(req.body.password, salt);
-
-    // Create a new user
-    const user = new User({
-        name: req.body.name,
-        email: req.body.email,
-        password: hashedPassword
-    });
 
     try {
-        // Save the new user in the DB
-        const newUser = await user.save();
-        res.send({user: newUser._id});
-    } catch (error) {
-        //TODO diferenciar se erro na bd de conexao ou se erro por ja existir user
+        // Validate fields in the request body
+        const {error} = registerValidation(req.body);
+        if (error) return res.status(400).send(error.details[0].message);
 
-        // User already exists
-        res.status(400)
-            .send(error);
+        if (await User.findOne({ email: req.body.email })){
+            return res.status(400).json({
+                message: `Email ${req.body.email} already exists!`
+            });
+        }
+
+        // Hash the password
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(req.body.password, salt);
+
+        // Create a new user
+        const user = new User({
+            ...req.body,
+            password: hashedPassword
+        });
+
+        // Save the new user in the DB
+        await user.save();
+
+        return res.status(201).json({
+            userId: user._id
+        });
+
+    } catch (err) {
+        return res.status(500).json({
+            message: 'Something went bad!'
+        });
     }
 }
 
+/**
+ *
+ * @param req
+ * @param res
+ * @returns {Promise<*>}
+ */
 const loginUser = async (req, res) => {
 
     // Validate fields in the request body
@@ -56,9 +73,9 @@ const loginUser = async (req, res) => {
             id: user._id,
             name: user.name,
             email: user.email,
-            isAdmin: user.isAdmin
+            role: user.role
         },
-        process.env.SECRET_KEY,
+        SECRET_KEY,
         {
             expiresIn: '1h'
         });
@@ -66,7 +83,12 @@ const loginUser = async (req, res) => {
     // Login successful
     return res.status(200)
         .header('authorization', 'bearer ' + token)
-        .send({token: token});
+        .json({token: token});
 };
 
-module.exports = { registerUser, loginUser };
+
+
+module.exports = {
+    registerUser,
+    loginUser
+};

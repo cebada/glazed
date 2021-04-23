@@ -1,11 +1,10 @@
 const router = require('express').Router();
-const Store = require('../models/Store');
 const storeService = require('../services/storeService');
-const {authenticateToken} = require('../services/utils');
+const { authenticateUser, checkRole } = require('../services/utils');
 
 
 router.route('/')
-    .post(authenticateToken,storeService.createStore);
+    .post(authenticateUser, checkRole(['admin']), storeService.createStore);
 
 
 module.exports = router;

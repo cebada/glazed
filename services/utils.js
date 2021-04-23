@@ -1,23 +1,17 @@
-const jwt = require('jsonwebtoken');
+const passport = require('passport');
 
 
 //TODO refreshToken JWT
 
-//TODO 401 ou 403?
-function authenticateToken (req, res, next) {
-    const bearerToken = req.header('authorization');
+const authenticateUser = passport.authenticate('jwt', {session: false});
 
-    if (!bearerToken) return res.status(401).send('Access denied!');
-
-    try {
-        const bearer = bearerToken.split(' ');
-        const token = bearer[1];
-        req.user = jwt.verify(token, process.env.SECRET_KEY);
-        next();
-    }catch (error){
-        res.status(401).send('Invalid token'); //TODO 400 ou 401 ou 403?
-    }
-}
+const checkRole = roles => (req, res, next) =>
+    !roles.includes(req.user.role)
+        ? res.status(403).json("Forbidden - You don't have the rights to access this resource!")
+        : next();
 
 
-module.exports.authenticateToken = authenticateToken;
+module.exports = {
+    authenticateUser,
+    checkRole
+};

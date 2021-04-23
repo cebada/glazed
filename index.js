@@ -1,36 +1,70 @@
-const dotEnv = require('dotenv');
+const cors = require('cors');
 const express = require('express');
 const mongoose = require('mongoose');
+const bp = require('body-parser');
+const passport = require('passport');
+const {success, error} = require('consola');
 
 //TODO verificar env variables
 
-// Import Routes
-const authRoute = require('./routes/auth');
-const storeRoute = require('./routes/store');
+// App constants
+const {APPLICATION_PORT, MONGODB_URL} = require('./config');
 
-dotEnv.config();
 const app = express();
 
-// Connect to DB
-mongoose.connect(process.env.MONGODB_URL,
-    {
-        useNewUrlParser: true,
-        useUnifiedTopology: true
-    }
-)
-    .then(() => console.log("Connection established!"))
-    .catch(error => console.error("Connection error", error));
+// Middlewares
+//app.use(express.json());
+app.use(cors());
+app.use(bp.json());
+app.use(passport.initialize());
 
-// Middleware
-app.use(express.json());
+// To enable roles
+require('./services/passportService')(passport);
 
-// Route Middlewares
-app.use('/api/user', authRoute);
-app.use('/api/store', storeRoute);
+
+// Routes Middleware
+app.use('/api/user', require('./routes/auth'));
+app.use('/api/store', require('./routes/store'));
 
 //default error catcher for routes
 app.use((req, res) => {
     res.sendStatus(404);
 })
 
-app.listen(process.env.APPLICATION_PORT, () => console.log('Server up and running'));
+const startApp = async () => {
+    try {
+        // Connect to DB
+        mongoose.connect(process.env.MONGODB_URL, {
+                useNewUrlParser: true,
+                useUnifiedTopology: true,
+                useCreateIndex: true//,
+                //useFindAndModify: true
+            }
+        );
+
+        // Connection established
+        success({
+            message: `Connection established with the Database \n ${MONGODB_URL}`,
+            badge: true
+        });
+
+        // Start the App
+        app.listen(APPLICATION_PORT, () =>
+            success({
+                message: `Server started on PORT ${APPLICATION_PORT}`,
+                badge: true
+            })
+        );
+
+    } catch (err) {
+        // Error while connecting to the Database
+        error({
+            message: `Unable to connect to Database \n${err}`,
+            badge: true
+        });
+        // Restart the App
+        startApp();
+    }
+};
+
+startApp();

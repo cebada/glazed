@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-const Schema = mongoose.Schema;
 
 // Schema for Store's collection
 const storeSchema = new mongoose.Schema({
@@ -12,12 +11,7 @@ const storeSchema = new mongoose.Schema({
     },
     ownerId: {
         type: String
-    },
-    schedules: [{
-        type: Schema.Types.ObjectId,
-        ref: 'Schedule',
-        required: true
-    }]
+    }
 });
 
 

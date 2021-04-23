@@ -15,12 +15,12 @@ const scheduleSchema = new mongoose.Schema({
     openingHour: {
         type: String,
         required: true,
-        validate: /^([0-1][0-9]|2[0-3]):[0-5][0-9]$/
+        validate: /^([0-1][0-9]|2[0-3]):[03][0]$/
     },
     closingHour: {
         type: String,
         required: true,
-        validate: /^([0-1][0-9]|2[0-3]):[0-5][0-9]$/
+        validate: /^([0-1][0-9]|2[0-3]):[03][0]$/
     },
     storeId: {
         type: String,
