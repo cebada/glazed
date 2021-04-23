@@ -16,9 +16,10 @@ mongoose.connect(process.env.MONGODB_URL,
     {
         useNewUrlParser: true,
         useUnifiedTopology: true
-    },
-    () => console.log('Connection established!')
-);
+    }
+)
+    .then(() => console.log("Connection established!"))
+    .catch(error => console.error("Connection error", error));
 
 // Middleware
 app.use(express.json());
@@ -26,5 +27,10 @@ app.use(express.json());
 // Route Middlewares
 app.use('/api/user', authRoute);
 app.use('/api/store', storeRoute);
+
+//default error catcher for routes
+app.use((req, res) => {
+    res.sendStatus(404);
+})
 
 app.listen(process.env.APPLICATION_PORT, () => console.log('Server up and running'));

@@ -1,6 +1,24 @@
 const Joi = require('joi');
+const {scheduleValidation} = require('./scheduleValidator')
 
 // Validate data sent on create request
+const createValidation = data => {
+    const schema = Joi.object({
+        name: Joi.string()
+            .min(3)
+            .max(255)
+            .required(),
+        schedules: Joi.array()
+            .items(scheduleValidation)
+            .length(7)
+    });
+    return schema.validate(data);
+};
+
+
+module.exports.createValidation = createValidation;
+
+/*
 const createValidation = data => {
     const schema = Joi.object({
         name : Joi.string()
@@ -19,7 +37,4 @@ const createValidation = data => {
     });
     return schema.validate(data);
 };
-
-
-
-module.exports.createValidation = createValidation;
+ */

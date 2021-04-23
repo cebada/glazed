@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
 
 // Schema for Store's collection
 const storeSchema = new mongoose.Schema({
@@ -9,24 +10,14 @@ const storeSchema = new mongoose.Schema({
         max: 255,
         unique: true
     },
-    capacity: {
-        type: Number,
-        required: true,
-        min: 0
-    },
-    openingHour: {
-        type: String,
-        required: true,
-        validate: /^([0-1][0-9]|2[0-3]):[0-5][0-9]$/
-    },
-    closingHour: {
-        type: String,
-        required: true,
-        validate: /^([0-1][0-9]|2[0-3]):[0-5][0-9]$/
-    },
     ownerId: {
         type: String
-    }
+    },
+    schedules: [{
+        type: Schema.Types.ObjectId,
+        ref: 'Schedule',
+        required: true
+    }]
 });
 
 

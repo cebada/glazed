@@ -3,7 +3,7 @@ const Joi = require('joi');
 // Validate data sent on register request
 const registerValidation = data => {
     const schema = Joi.object({
-        name : Joi.string()
+        name: Joi.string()
             .min(3)
             .max(255)
             .required(),
