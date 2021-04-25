@@ -10,9 +10,14 @@ const orderSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    slotId: {
-        type: String,
+    date: {
+        type: Date,
         required: true
+    },
+    time: {
+        type: String,
+        required: true,
+        validate: /^([0-1][0-9]|2[0-3]):[03][0]$/
     }
 });
 

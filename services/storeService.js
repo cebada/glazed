@@ -1,9 +1,10 @@
 const Store = require('../models/Store');
-const User = require('../models/User');
 const Schedule = require('../models/Schedule');
 const Order = require('../models/Order');
 const {createValidation} = require('../validators/storeValidator');
 const {scheduleValidation} = require('../validators/scheduleValidator');
+const {orderValidation} = require('../validators/orderValidator');
+const {updateScheduleValidation} = require('../validators/updateScheduleValidator');
 
 const START_DELIVERY_TIME = "08:00";
 const END_DELIVERY_TIME = "22:00";
@@ -75,7 +76,7 @@ const createStoreSchedule = async (req, res) => {
 
     try {
         for (const s of schedules) {
-            const correctedHours = correctScheduleHours(s);
+            const correctedHours = correctScheduleHours(s.openingHour, s.closingHour);
             const schedule = new Schedule({
                 weekDay: s.weekDay,
                 capacity: s.capacity,
@@ -96,8 +97,7 @@ const createStoreSchedule = async (req, res) => {
     }
 }
 
-/*
-const createSlots = async (openingHour, closingHour, scheduleId) => {
+const fillAvailability = (openingHour, closingHour) => {
     let slots = [];
     let initialTime = START_DELIVERY_TIME > openingHour ? START_DELIVERY_TIME : openingHour;
     let endTime = END_DELIVERY_TIME < closingHour ? END_DELIVERY_TIME : closingHour;
@@ -105,39 +105,26 @@ const createSlots = async (openingHour, closingHour, scheduleId) => {
     // No slot for the first half an hour
     initialTime = nextSlotTime(initialTime);
 
-    try {
-        while (initialTime <= endTime) {
-            const slot = new Slot({
-                //startTime:
-                endTime: initialTime,
-                scheduleId: scheduleId
-            });
-            await slot.save();
-            slots.push(slot);
-            initialTime = nextSlotTime(initialTime);
-        }
-        return slots;
-    } catch (error) {
-        return res.status(400).json({
-            message: error
-        });
+    while (initialTime <= endTime) {
+        slots.push(initialTime);
+        initialTime = nextSlotTime(initialTime);
     }
+    return slots;
+};
 
-}*/
-
-const correctScheduleHours = schedule => {
+const correctScheduleHours = (openingHour, closingHour) => {
     let hours = new Map();
 
-    if (schedule.openingHour === schedule.closingHour){
+    if (openingHour === closingHour) {
         hours.set('openingHour', '00:00');
         hours.set('closingHour', '00:00');
     } else {
-        if (schedule.openingHour > schedule.closingHour){
-            hours.set('openingHour', schedule.closingHour);
-            hours.set('closingHour', schedule.openingHour);
+        if (openingHour > closingHour) {
+            hours.set('openingHour', closingHour);
+            hours.set('closingHour', openingHour);
         } else {
-            hours.set('openingHour', schedule.openingHour);
-            hours.set('closingHour', schedule.closingHour);
+            hours.set('openingHour', openingHour);
+            hours.set('closingHour', closingHour);
         }
     }
     return hours;
@@ -159,47 +146,63 @@ const nextSlotTime = initialTime => {
         minute = '30';
     }
     return hour + ':' + minute;
-}
+};
 
-const getStoreSchedule = async (req, res) => {
-    try {
-        // Get store's schedule
-        const schedule = await Schedule.findOne({storeId: req.params.id, weekDay: dayOfTheWeek(req.params.day)});
+const getStoreAvailability = async (req, res) => {
 
-        if (!schedule) {
-            return res.status(404).json({
-                message: 'Store not found'
-            });
-        }
-
-        const slots = await Slot.find({scheduleId: schedule.id});
-
-        //let response = new Map();
-        let response = [];
-
-        for (i = 0; i < slots.length; i++){
-            const orders = await Order.find({slotId: slots[i]._id, date: req.params.day});
-            response.push({
-                endTime: slots[i].endTime,
-                available: orders.length < schedule.capacity
-            });
-            //response.set(s, orders.length < schedule.capacity ? 'true' : 'false');
-        }
-
-        return res.status(200).json({
-           message: response
-        });
-    } catch (error) {
+    const weekDay = dayOfTheWeek(req.params.date);
+    if (!weekDay) {
         return res.status(400).json({
-            message: error
+            message: 'Invalid date!'
         });
     }
-}
+
+    try {
+        // Get store's schedule
+        const schedule = await Schedule.findOne({storeId: req.params.id, weekDay: weekDay});
+
+        // Get orders for that day
+        const orders = await Order.find({scheduleId: schedule._id, date: req.params.date}).sort({time: 1});
+
+        let availableTime = [];
+        if (orders.length === 0) {
+            availableTime = fillAvailability(schedule.openingHour, schedule.closingHour);
+            return res.status(200).json({
+                availableTime: availableTime
+            });
+        }
+
+        // Check if each 30 minute slot is available
+        let orderCount = 0;
+        let orderTime = orders[0].time;
+        let lastOrder;
+        orders.forEach(o => {
+            if (o.time !== orderTime) {
+                if (orderCount < schedule.capacity) availableTime.push(o.time);
+                ordercount = 0;
+                orderTime = o.time;
+            }
+            orderCount++;
+            lastOrder = o;
+        });
+        // Check final order in the
+        if (orderCount < schedule.capacity) availableTime.push(lastOrder.time);
+
+
+        return res.status(200).json({
+            availableTime: availableTime
+        });
+    } catch (error) {
+        return res.status(404).json({
+            message: 'Schedule not found'
+        });
+    }
+};
 
 const dayOfTheWeek = day => {
-    try{
+    try {
         var weekDay = new Date(day);
-        switch (weekDay.getDay()){
+        switch (weekDay.getDay()) {
             case 0:
                 return 'Sunday';
             case 1:
@@ -220,24 +223,7 @@ const dayOfTheWeek = day => {
     } catch (error) {
         return null;
     }
-}
-
-//TODO mensagem de retorno
-/*
-// Delete slot from schedule
-const deleteSlot = slot => {
-    slot.orders.forEach(o => {
-        try {
-            // Remove from the user's order list the id from the order to delete
-            const user = User.findById(o.userId);
-            user.orders.pull({_id: o._id});
-            // Delete the order
-            o.delete();
-        } catch (error) {
-            console.log(error);
-        }
-    });
-}*/
+};
 
 const getAllStores = async (req, res) => {
     try {
@@ -250,7 +236,139 @@ const getAllStores = async (req, res) => {
             message: 'No stores were found!'
         });
     }
-}
+};
+
+const createOrder = async (req, res) => {
+
+    // Validate fields in the request body
+    const {error} = orderValidation(req.body);
+    if (error) return res.status(400).json({
+        error: error.details[0].message
+    });
+
+    let store;
+    try {
+        store = await Store.findById(req.params.id);
+    } catch (error) {
+        return res.status(404).json({
+            error: 'Store not found!'
+        });
+    }
+
+    try {
+        const schedule = await Schedule.findOne({ weekDay: dayOfTheWeek(req.body.date), storeId: store._id });
+        if (!isValidTime(req.body.time, schedule)) {
+            return res.status(400).json({
+                error: 'Choose a valid time slot!'
+            });
+        }
+
+        const orders = await Order.find({
+            scheduleId: schedule._id,
+            date: req.body.date,
+            time: req.body.time
+        });
+        if (orders.length < schedule.capacity) {
+            const newOrder = new Order({
+                userId: req.user.id,
+                storeId: req.params.id,
+                scheduleId: req.body.scheduleId,
+                date: req.body.date,
+                time: req.body.time
+            });
+            await newOrder.save();
+            return res.status(201).json({
+                orderId: newOrder._id
+            });
+        } else {
+            res.status(400).json({
+                error: `Can't create order due to the store's capacity!`
+            })
+        }
+    } catch (error) {
+        return res.status(400).json({
+            error: 'Bad Request!'
+        })
+    }
+};
+
+const isValidTime = (time, schedule) => {
+
+    const initialTime = START_DELIVERY_TIME > nextSlotTime(schedule.openingHour)
+        ? START_DELIVERY_TIME
+        : nextSlotTime(schedule.openingHour);
+    const endTime = END_DELIVERY_TIME < schedule.closingHour
+        ? END_DELIVERY_TIME
+        : schedule.closingHour;
+
+    return time >= initialTime && time <= endTime;
+
+};
+
+const updateSchedule = async (req, res) => {
+
+    // Validate fields in the request body
+    const {error} = updateScheduleValidation(req.body);
+    if (error) return res.status(400).json({
+        error: error.details[0].message
+    });
+
+    const hours = correctScheduleHours(req.body.openingHour, req.body.closingHour);
+    const initialTime = START_DELIVERY_TIME > nextSlotTime(hours.get('openingHour'))
+        ? START_DELIVERY_TIME
+        : nextSlotTime(hours.get('openingHour'));
+    const endTime = END_DELIVERY_TIME < hours.get('closingHour')
+        ? END_DELIVERY_TIME
+        : hours.get('closingHour');
+
+    const today = getCurrentDate();
+
+    let schedule;
+    try {
+        schedule = await Schedule.findByIdAndUpdate(req.params.sId, req.body);
+    } catch (error) {
+        return res.status(404).json({
+            error: 'Schedule not found!'
+        });
+    }
+
+    try {
+
+        if (initialTime >= endTime) {
+            await Order.deleteMany({
+                scheduleId: schedule._id,
+                date: { $gt: today }
+            });
+        }
+        else{
+            await Order.deleteMany({
+                scheduleId: schedule._id,
+                $or : [
+                    {time: { $lt: initialTime }},
+                    {time: { $gt: endTime }},
+                ],
+                date: { $gt: today }
+            });
+        }
+        return res.status(200).json({
+            message: 'Updated the schedule!'
+        });
+
+    } catch (error) {
+        return res.status(400).json({
+            error: error
+        });
+    }
+};
+
+const getCurrentDate = () => {
+    const date = new Date();
+    const day = date.getDate() < 10 ? '0' + date.getDate() : date.getDate();
+    const m = date.getMonth() + 1;
+    const month = m < 10 ? '0' + m : m;
+
+    return date.getFullYear() + '-' + month + '-' + day;
+};
 
 //TODO verificar se openingHour<closingHour e trocar se necessário
 
@@ -258,7 +376,6 @@ const getAllStores = async (req, res) => {
 const deleteAll = async (req, res) => {
     try {
         await Schedule.deleteMany();
-        await Slot.deleteMany();
         return res.status(200).json({
             message: "Deleted!"
         });
@@ -268,13 +385,15 @@ const deleteAll = async (req, res) => {
         });
     }
 
-
 };
 
 
-module.exports = {createStore,
+module.exports = {
+    createStore,
     createStoreSchedule,
-    getStoreSchedule,
+    getStoreAvailability,
     getAllStores,
+    createOrder,
+    updateSchedule,
     deleteAll
 };
