@@ -6,12 +6,12 @@ const orderSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    storeId: {
+    scheduleId: {
         type: String,
         required: true
     },
-    slotId: {
-        type: String,
+    date: {
+        type: Date,
         required: true
     }
 });

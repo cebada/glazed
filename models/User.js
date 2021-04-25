@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-const Schema = mongoose.Schema;
 
 // Schema for User's collection
 const userSchema = new mongoose.Schema({
@@ -26,11 +25,7 @@ const userSchema = new mongoose.Schema({
         type: String,
         default: 'customer',
         enum: ['customer', 'admin']
-    },
-    orders: [{
-        type: Schema.Types.ObjectId,
-        ref: 'Order'
-    }]
+    }
 });
 
 

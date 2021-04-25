@@ -6,6 +6,10 @@ const slotSchema = new mongoose.Schema({
         type: String,
         required: true,
         validate: /^([0-1][0-9]|2[0-3]):[03][0]$/
+    },
+    scheduleId: {
+        type: String,
+        required:true
     }
 });
 

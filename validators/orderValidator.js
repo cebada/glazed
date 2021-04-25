@@ -4,6 +4,8 @@ const Joi = require('joi');
 const orderValidation = data => {
     const schema = Joi.object({
         slotId: Joi.string()
+            .required(),
+        date: Joi.date()
             .required()
     });
     return schema.validate(data);

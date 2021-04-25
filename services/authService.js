@@ -7,7 +7,7 @@ const {
 } = require('../validators/userValidator');
 
 // App constants
-const { SECRET_KEY } = require('../config');
+const {SECRET_KEY} = require('../config');
 
 
 const registerUser = async (req, res) => {
@@ -16,9 +16,11 @@ const registerUser = async (req, res) => {
     try {
         // Validate fields in the request body
         const {error} = registerValidation(req.body);
-        if (error) return res.status(400).send(error.details[0].message);
+        if (error) return res.status(400).json({
+            message: error.details[0].message
+        });
 
-        if (await User.findOne({ email: req.body.email })){
+        if (await User.findOne({email: req.body.email})) {
             return res.status(400).json({
                 message: `Email ${req.body.email} already exists!`
             });
@@ -30,15 +32,17 @@ const registerUser = async (req, res) => {
 
         // Create a new user
         const user = new User({
+            /*name: req.body.name,
+            email: req.body.email,*/
+
             ...req.body,
             password: hashedPassword
         });
 
         // Save the new user in the DB
-        await user.save();
-
+        const newUser = await user.save();
         return res.status(201).json({
-            userId: user._id
+            userId: newUser._id
         });
 
     } catch (err) {
@@ -58,15 +62,21 @@ const loginUser = async (req, res) => {
 
     // Validate fields in the request body
     const {error} = loginValidation(req.body);
-    if (error) return res.status(400).send(error.details[0].message);
+    if (error) return res.status(400).json({
+        message: error.details[0].message
+    });
 
     // Check if user exists
     const user = await User.findOne({email: req.body.email});
-    if (!user) return res.status(401).send('Incorrect credentials!');
+    if (!user) return res.status(401).json({
+        message: 'Incorrect credentials!'
+    });
 
     // Check if password is correct
     const validPassword = await bcrypt.compare(req.body.password, user.password);
-    if (!validPassword) return res.status(401).send('Incorrect credentials!');
+    if (!validPassword) return res.status(401).json({
+        message: 'Incorrect credentials!'
+    });
 
     // Create JWT token (expires in 1h)
     const token = jwt.sign({
@@ -85,7 +95,6 @@ const loginUser = async (req, res) => {
         .header('authorization', 'bearer ' + token)
         .json({token: token});
 };
-
 
 
 module.exports = {

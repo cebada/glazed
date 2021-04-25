@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-const Schema = mongoose.Schema;
 
 // Schema for Schedule's collection
 const scheduleSchema = new mongoose.Schema({
@@ -25,12 +24,7 @@ const scheduleSchema = new mongoose.Schema({
     storeId: {
         type: String,
         required: true
-    },
-    slots: [{
-        type: Schema.Types.ObjectId,
-        ref: 'Slot',
-        require: true
-    }]
+    }
 });
 
 

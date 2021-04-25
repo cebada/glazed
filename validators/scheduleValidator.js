@@ -2,7 +2,7 @@ const Joi = require('joi');
 
 // Validate Schedule data
 const scheduleValidation = data => {
-    const schema = Joi.object().keys({
+    const schema = Joi.object({
         weekDay: Joi.string()
             .valid(
                 'Monday',
