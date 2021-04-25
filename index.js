@@ -3,6 +3,9 @@ const express = require('express');
 const mongoose = require('mongoose');
 const bp = require('body-parser');
 const passport = require('passport');
+const authRoute = require('./routes/auth');
+const storeRoute = require('./routes/store');
+const orderRoute = require('./routes/order');
 const {success, error} = require('consola');
 
 //TODO verificar env variables
@@ -23,8 +26,9 @@ require('./services/passportService')(passport);
 
 
 // Routes Middleware
-app.use('/api/user', require('./routes/auth'));
-app.use('/api/store', require('./routes/store'));
+app.use('/api/user', authRoute);
+app.use('/api/store', storeRoute);
+app.use('/api/order', orderRoute);
 
 //default error catcher for routes
 app.use((req, res) => {

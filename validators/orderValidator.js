@@ -7,6 +7,8 @@ const orderValidation = data => {
             .required(),
         time: Joi.string()
             .pattern(/^([0-1][0-9]|2[0-3]):[03][0]$/)
+            .required(),
+        storeId: Joi.string()
             .required()
     });
     return schema.validate(data);

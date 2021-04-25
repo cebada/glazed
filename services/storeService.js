@@ -1,13 +1,14 @@
 const Store = require('../models/Store');
 const Schedule = require('../models/Schedule');
 const Order = require('../models/Order');
+const {START_DELIVERY_TIME, END_DELIVERY_TIME} = require('../config/index');
+const {getCurrentDate} = require("./utils");
+const {nextSlotTime} = require("./utils");
+const {dayOfTheWeek} = require("./utils");
 const {createValidation} = require('../validators/storeValidator');
 const {scheduleValidation} = require('../validators/scheduleValidator');
-const {orderValidation} = require('../validators/orderValidator');
 const {updateScheduleValidation} = require('../validators/updateScheduleValidator');
 
-const START_DELIVERY_TIME = "08:00";
-const END_DELIVERY_TIME = "22:00";
 
 const createStore = async (req, res) => {
     //TODO use Logs
@@ -45,6 +46,7 @@ const createStore = async (req, res) => {
     }
 };
 
+// To keep the store close, equal the openingHour and closingHour values
 const createStoreSchedule = async (req, res) => {
 
     //TODO deve ser desnecessario pq cadeia de lojas
@@ -97,6 +99,7 @@ const createStoreSchedule = async (req, res) => {
     }
 }
 
+
 const fillAvailability = (openingHour, closingHour) => {
     let slots = [];
     let initialTime = START_DELIVERY_TIME > openingHour ? START_DELIVERY_TIME : openingHour;
@@ -128,25 +131,8 @@ const correctScheduleHours = (openingHour, closingHour) => {
         }
     }
     return hours;
-}
-
-/**
- * Increment the given time by half an hour
- * @param initialTime Time to be incremented
- * @returns {string} Incremented time
- */
-const nextSlotTime = initialTime => {
-    let hour = initialTime.split(':')[0];
-    let minute = initialTime.split(':')[1];
-    if (minute === '30') {
-        hour++;
-        if (hour < '10') hour = '0' + hour;
-        minute = '00';
-    } else {
-        minute = '30';
-    }
-    return hour + ':' + minute;
 };
+
 
 const getStoreAvailability = async (req, res) => {
 
@@ -199,32 +185,6 @@ const getStoreAvailability = async (req, res) => {
     }
 };
 
-const dayOfTheWeek = day => {
-    try {
-        var weekDay = new Date(day);
-        switch (weekDay.getDay()) {
-            case 0:
-                return 'Sunday';
-            case 1:
-                return 'Monday';
-            case 2:
-                return 'Tuesday';
-            case 3:
-                return 'Wednesday';
-            case 4:
-                return 'Thursday';
-            case 5:
-                return 'Friday';
-            case 6:
-                return 'Saturday';
-            default:
-                return '';
-        }
-    } catch (error) {
-        return null;
-    }
-};
-
 const getAllStores = async (req, res) => {
     try {
         const stores = await Store.find();
@@ -238,72 +198,6 @@ const getAllStores = async (req, res) => {
     }
 };
 
-const createOrder = async (req, res) => {
-
-    // Validate fields in the request body
-    const {error} = orderValidation(req.body);
-    if (error) return res.status(400).json({
-        error: error.details[0].message
-    });
-
-    let store;
-    try {
-        store = await Store.findById(req.params.id);
-    } catch (error) {
-        return res.status(404).json({
-            error: 'Store not found!'
-        });
-    }
-
-    try {
-        const schedule = await Schedule.findOne({ weekDay: dayOfTheWeek(req.body.date), storeId: store._id });
-        if (!isValidTime(req.body.time, schedule)) {
-            return res.status(400).json({
-                error: 'Choose a valid time slot!'
-            });
-        }
-
-        const orders = await Order.find({
-            scheduleId: schedule._id,
-            date: req.body.date,
-            time: req.body.time
-        });
-        if (orders.length < schedule.capacity) {
-            const newOrder = new Order({
-                userId: req.user.id,
-                storeId: req.params.id,
-                scheduleId: req.body.scheduleId,
-                date: req.body.date,
-                time: req.body.time
-            });
-            await newOrder.save();
-            return res.status(201).json({
-                orderId: newOrder._id
-            });
-        } else {
-            res.status(400).json({
-                error: `Can't create order due to the store's capacity!`
-            })
-        }
-    } catch (error) {
-        return res.status(400).json({
-            error: 'Bad Request!'
-        })
-    }
-};
-
-const isValidTime = (time, schedule) => {
-
-    const initialTime = START_DELIVERY_TIME > nextSlotTime(schedule.openingHour)
-        ? START_DELIVERY_TIME
-        : nextSlotTime(schedule.openingHour);
-    const endTime = END_DELIVERY_TIME < schedule.closingHour
-        ? END_DELIVERY_TIME
-        : schedule.closingHour;
-
-    return time >= initialTime && time <= endTime;
-
-};
 
 const updateSchedule = async (req, res) => {
 
@@ -337,17 +231,16 @@ const updateSchedule = async (req, res) => {
         if (initialTime >= endTime) {
             await Order.deleteMany({
                 scheduleId: schedule._id,
-                date: { $gt: today }
+                date: {$gt: today}
             });
-        }
-        else{
+        } else {
             await Order.deleteMany({
                 scheduleId: schedule._id,
-                $or : [
-                    {time: { $lt: initialTime }},
-                    {time: { $gt: endTime }},
+                $or: [
+                    {time: {$lt: initialTime}},
+                    {time: {$gt: endTime}},
                 ],
-                date: { $gt: today }
+                date: {$gt: today}
             });
         }
         return res.status(200).json({
@@ -361,39 +254,11 @@ const updateSchedule = async (req, res) => {
     }
 };
 
-const getCurrentDate = () => {
-    const date = new Date();
-    const day = date.getDate() < 10 ? '0' + date.getDate() : date.getDate();
-    const m = date.getMonth() + 1;
-    const month = m < 10 ? '0' + m : m;
-
-    return date.getFullYear() + '-' + month + '-' + day;
-};
-
-//TODO verificar se openingHour<closingHour e trocar se necessário
-
-//TODO nao esquecer de remover
-const deleteAll = async (req, res) => {
-    try {
-        await Schedule.deleteMany();
-        return res.status(200).json({
-            message: "Deleted!"
-        });
-    } catch (error) {
-        return res.status(400).json({
-            message: error
-        });
-    }
-
-};
-
 
 module.exports = {
     createStore,
     createStoreSchedule,
     getStoreAvailability,
     getAllStores,
-    createOrder,
-    updateSchedule,
-    deleteAll
+    updateSchedule
 };
