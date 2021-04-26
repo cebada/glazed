@@ -4,7 +4,8 @@ const { authenticateUser, checkRole } = require('../services/utils');
 
 
 router.route('/')
-    .post(authenticateUser, checkRole(['customer']), orderService.createOrder);
+    .post(authenticateUser, checkRole(['customer']), orderService.createOrder)
+    .get(authenticateUser, checkRole(['customer']), orderService.getOrders);
 
 router.route('/:id')
     .delete(authenticateUser, checkRole(['customer']), orderService.cancelOrder);

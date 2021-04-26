@@ -64,7 +64,7 @@ const createOrder = async (req, res) => {
 const cancelOrder = async (req, res) => {
 
     try {
-        const order = await Order.deleteOne({
+        await Order.deleteOne({
             _id: req.params.id,
             userId: req.user.id
         });
@@ -79,6 +79,20 @@ const cancelOrder = async (req, res) => {
     }
 };
 
+const getOrders = async (req, res) => {
+    try {
+        const orders = await Order.find({
+            userId: req.user.id
+        });
+        return res.status(200).json({
+            orders: orders
+        });
+    } catch (error) {
+        return res.status(400).json({
+            orders: 'Something went bad!'
+        });
+    }
+}
 
 const isValidTime = (time, schedule) => {
 
@@ -96,5 +110,6 @@ const isValidTime = (time, schedule) => {
 
 module.exports = {
     createOrder,
-    cancelOrder
+    cancelOrder,
+    getOrders
 }
