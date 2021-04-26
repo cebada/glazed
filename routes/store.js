@@ -2,6 +2,7 @@ const router = require('express').Router();
 const storeService = require('../services/storeService');
 const { authenticateUser, checkRole } = require('../services/utils');
 
+// Store Requests
 
 router.route('/')
     .post(authenticateUser, checkRole(['admin']), storeService.createStore)

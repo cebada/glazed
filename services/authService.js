@@ -10,6 +10,12 @@ const {
 const { SECRET_KEY } = require('../config');
 
 
+/**
+ * Register new User
+ * @param req Request with new User's body
+ * @param res Response
+ * @returns {Promise<*>} Created if successful, else Bad Request
+ */
 const registerUser = async (req, res) => {
     //TODO use Logs
 
@@ -49,10 +55,10 @@ const registerUser = async (req, res) => {
 }
 
 /**
- *
- * @param req
- * @param res
- * @returns {Promise<*>}
+ * Logs in the user
+ * @param req Resquest with user's credentials
+ * @param res Response
+ * @returns {Promise<*>} Ok if success (returns JWT token), else unauthorized
  */
 const loginUser = async (req, res) => {
 
@@ -86,9 +92,17 @@ const loginUser = async (req, res) => {
         .json({token: token});
 };
 
+const logout = async (req, res) => {
+    // Logout successful
+    return res.status(200)
+        .header('authorization', '')
+        .json({message: 'Logged out!'});
+};
+
 
 
 module.exports = {
     registerUser,
-    loginUser
+    loginUser,
+    logout
 };

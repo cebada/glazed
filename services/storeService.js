@@ -10,6 +10,12 @@ const {scheduleValidation} = require('../validators/scheduleValidator');
 const {updateScheduleValidation} = require('../validators/updateScheduleValidator');
 
 
+/**
+ * Creates a new Store
+ * @param req Request with the new store body
+ * @param res Response
+ * @returns {Promise<*>} Created if success, else Bad Request
+ */
 const createStore = async (req, res) => {
     //TODO use Logs
     //TODO mudar nrs de httpstatus para enum
@@ -46,7 +52,12 @@ const createStore = async (req, res) => {
     }
 };
 
-// To keep the store close, equal the openingHour and closingHour values
+/**
+ * Creates a store's schedule (To keep the store close, equal the openingHour and closingHour values)
+ * @param req Request with the array of Schedules to create
+ * @param res Response
+ * @returns {Promise<*>} Created if success, else Bad Request
+ */
 const createStoreSchedule = async (req, res) => {
 
     //TODO deve ser desnecessario pq cadeia de lojas
@@ -99,7 +110,12 @@ const createStoreSchedule = async (req, res) => {
     }
 }
 
-
+/**
+ * Returns every possible order time between two given hours
+ * @param openingHour Starting hour
+ * @param closingHour Final hour
+ * @returns {*[]} Returns an array of possible order times
+ */
 const fillAvailability = (openingHour, closingHour) => {
     let slots = [];
     let initialTime = START_DELIVERY_TIME > openingHour ? START_DELIVERY_TIME : openingHour;

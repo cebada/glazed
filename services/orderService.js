@@ -6,7 +6,12 @@ const {orderValidation} = require('../validators/orderValidator');
 const {nextSlotTime} = require("./utils");
 const {dayOfTheWeek} = require('./utils');
 
-
+/**
+ * Creates an order on a set day, store and time
+ * @param req Request with the body needed for the function
+ * @param res Response
+ * @returns {Promise<*>} Created if success, else Bad Request
+ */
 const createOrder = async (req, res) => {
 
     // Validate fields in the request body
@@ -61,6 +66,12 @@ const createOrder = async (req, res) => {
     }
 };
 
+/**
+ * Cancel a user's order
+ * @param req Request with the order Id
+ * @param res Response
+ * @returns {Promise<*>} Ok if order is canceled, Not found if the order doesn't exist
+ */
 const cancelOrder = async (req, res) => {
 
     try {
@@ -79,6 +90,12 @@ const cancelOrder = async (req, res) => {
     }
 };
 
+/**
+ * Gets orders from user
+ * @param req Request
+ * @param res Response
+ * @returns {Promise<*>} User's orders
+ */
 const getOrders = async (req, res) => {
     try {
         const orders = await Order.find({
@@ -94,6 +111,12 @@ const getOrders = async (req, res) => {
     }
 }
 
+/**
+ * Check jf given time is within the valid order time
+ * @param time Time to be compared
+ * @param schedule Schedule to check the time
+ * @returns {boolean} True if it's a valid order time, else False
+ */
 const isValidTime = (time, schedule) => {
 
     const initialTime = START_DELIVERY_TIME > nextSlotTime(schedule.openingHour)

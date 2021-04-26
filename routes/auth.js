@@ -1,8 +1,7 @@
 const router = require('express').Router();
 const authService = require('../services/authService');
-//const { authenticateUser } = require('../services/utils');
 
-
+// Authentication Routes
 
 router.route('/register')
     .post(authService.registerUser);
@@ -10,7 +9,8 @@ router.route('/register')
 router.route('/login')
     .post(authService.loginUser);
 
-
+router.route('/logout')
+    .post(authService.logout);
 
 
 module.exports = router;
