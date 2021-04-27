@@ -3,8 +3,16 @@ const passport = require('passport');
 
 //TODO refreshToken JWT
 
+/**
+ * Checks if User is authenticated
+ */
 const authenticateUser = passport.authenticate('jwt', {session: false});
 
+/**
+ * Checks for user's roles
+ * @param roles User role
+ * @returns {function(*, *, *): *} Returns forbidden if the user doesn't have the necessary role
+ */
 const checkRole = roles => (req, res, next) =>
     !roles.includes(req.user.role)
         ? res.status(403).json("Forbidden - You don't have the rights to access this resource!")
@@ -28,6 +36,11 @@ const nextSlotTime = initialTime => {
     return hour + ':' + minute;
 };
 
+/**
+ * Converts date in a day of the week
+ * @param day Given adte to convert
+ * @returns {string|null} Returns the day of the week
+ */
 const dayOfTheWeek = day => {
     try {
         var weekDay = new Date(day);
@@ -54,6 +67,10 @@ const dayOfTheWeek = day => {
     }
 };
 
+/**
+ * Gets the current date in the YYYY-MM-DD format
+ * @returns {string} Returns the current date
+ */
 const getCurrentDate = () => {
     const date = new Date();
     const day = date.getDate() < 10 ? '0' + date.getDate() : date.getDate();

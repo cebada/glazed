@@ -131,6 +131,13 @@ const fillAvailability = (openingHour, closingHour) => {
     return slots;
 };
 
+
+/**
+ * Checks two given times and corrects them so the openingHour is always before the closingHour (both values = 00:00 when the store is closed)
+ * @param openingHour Given openingHour
+ * @param closingHour Given closingHour
+ * @returns {Map<any, any>} Returns a map with the correct opening and closing hours
+ */
 const correctScheduleHours = (openingHour, closingHour) => {
     let hours = new Map();
 
@@ -149,7 +156,12 @@ const correctScheduleHours = (openingHour, closingHour) => {
     return hours;
 };
 
-
+/**
+ * Checks for available time slots for orders in a given day for a store
+ * @param req Request with the body with storeId and date to check
+ * @param res Response
+ * @returns {Promise<*>} Returns an array with the still available slots for that day
+ */
 const getStoreAvailability = async (req, res) => {
 
     const weekDay = dayOfTheWeek(req.params.date);
@@ -201,6 +213,12 @@ const getStoreAvailability = async (req, res) => {
     }
 };
 
+/**
+ * Gets all existing stores
+ * @param req Request
+ * @param res Response
+ * @returns {Promise<*>} Returns an array of stores
+ */
 const getAllStores = async (req, res) => {
     try {
         const stores = await Store.find();
@@ -214,7 +232,12 @@ const getAllStores = async (req, res) => {
     }
 };
 
-
+/**
+ * Updates a store's schedule for a given day
+ * @param req Request body
+ * @param res
+ * @returns {Promise<*>}
+ */
 const updateSchedule = async (req, res) => {
 
     // Validate fields in the request body
