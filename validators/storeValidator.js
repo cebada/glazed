@@ -1,5 +1,5 @@
 const Joi = require('joi');
-
+const scheduleValidator = require('./scheduleValidator');
 // Validate data sent on create request
 const createValidation = data => {
     const schema = Joi.object({
