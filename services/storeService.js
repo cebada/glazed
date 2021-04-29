@@ -217,13 +217,23 @@ const getStoreAvailability = async (req, res) => {
  * Gets all existing stores
  * @param req Request
  * @param res Response
- * @returns {Promise<*>} Returns an array of stores
+ * @returns {Promise<*>} Returns an array of stores with their full info
  */
 const getAllStores = async (req, res) => {
     try {
         const stores = await Store.find();
+        const schedules = await Schedule.find();
+        let fullInfoStores = [];
+        stores.forEach(s => {
+            fullInfoStores.push({
+                id: s.id,
+                name: s.name,
+                schedules: schedules.filter((sch) => sch.storeId === s.id)
+            });
+
+        });
         return res.status(200).json({
-            stores: stores
+            stores: fullInfoStores
         });
     } catch (error) {
         return res.status(404).json({

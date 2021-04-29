@@ -25,12 +25,7 @@ const scheduleSchema = new mongoose.Schema({
     storeId: {
         type: String,
         required: true
-    },
-    slots: [{
-        type: Schema.Types.ObjectId,
-        ref: 'Slot',
-        require: true
-    }]
+    }
 });
 
 

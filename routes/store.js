@@ -6,7 +6,7 @@ const { authenticateUser, checkRole } = require('../services/utils');
 
 router.route('/')
     .post(authenticateUser, checkRole(['admin']), storeService.createStore)
-    .get(authenticateUser, checkRole(['customer']), storeService.getAllStores);
+    .get(authenticateUser, checkRole(['customer', 'admin']), storeService.getAllStores);
 
 router.route('/:id/schedules')
     .post(authenticateUser, checkRole(['admin']), storeService.createStoreSchedule);
