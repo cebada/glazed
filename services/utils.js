@@ -1,8 +1,6 @@
 const passport = require('passport');
 
 
-//TODO refreshToken JWT
-
 /**
  * Checks if User is authenticated
  */

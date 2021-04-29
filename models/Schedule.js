@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-const Schema = mongoose.Schema;
 
 // Schema for Schedule's collection
 const scheduleSchema = new mongoose.Schema({

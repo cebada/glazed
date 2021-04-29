@@ -17,8 +17,6 @@ const {updateScheduleValidation} = require('../validators/updateScheduleValidato
  * @returns {Promise<*>} Created if success, else Bad Request
  */
 const createStore = async (req, res) => {
-    //TODO use Logs
-    //TODO mudar nrs de httpstatus para enum
 
     // Validate fields in the request body
     const {error} = createValidation(req.body);
@@ -41,10 +39,6 @@ const createStore = async (req, res) => {
         });
 
     } catch (error) {
-        //TODO diferenciar se erro na bd de conexao ou se erro por ja existir user
-
-        //TODO mudar a mensagem de erro para "loja ja existente ou assim"
-
         // User already exists
         return res.status(400).json({
             message: error
@@ -60,8 +54,6 @@ const createStore = async (req, res) => {
  */
 const createStoreSchedule = async (req, res) => {
 
-    //TODO deve ser desnecessario pq cadeia de lojas
-
     // Check if schedule array is provided
     const schedules = req.body.schedules;
     schedules
@@ -72,7 +64,7 @@ const createStoreSchedule = async (req, res) => {
                 message: error.details[0].message
             });
         })
-        : res.status(400).json({                                        //TODO not working!
+        : res.status(400).json({
             message: `Please provide the store's schedules!`
         });
 

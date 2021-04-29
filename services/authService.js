@@ -17,7 +17,6 @@ const { SECRET_KEY } = require('../config');
  * @returns {Promise<*>} Created if successful, else Bad Request
  */
 const registerUser = async (req, res) => {
-    //TODO use Logs
 
     try {
         // Validate fields in the request body
