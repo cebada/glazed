@@ -1,7 +1,7 @@
 require('dotenv').config();
 
 module.exports = {
-    APPLICATION_PORT: process.env.APPLICATION_PORT,
+    APPLICATION_PORT: process.env.APPLICATION_PORT || 3000,
     //MONGODB_URL: process.env.MONGODB_URL,
     MONGODB_URL: "mongodb+srv://testuser:test123@glazed-cluster.eahyu.mongodb.net/myFirstDatabase?retryWrites=true&w=majority",
     //SECRET_KEY: process.env.SECRET_KEY,
