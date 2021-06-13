@@ -20,16 +20,23 @@ const createStore = async (req, res) => {
 
     // Validate fields in the request body
     const {error} = createValidation(req.body);
-    if (error) return res.status(400).json({
-        message: error.details[0].message
-    });
+    if (error) {
+        return res.status(400).json({
+            message: error.details[0].message
+        });
 
+    }
+
+    if (await Store.findOne({name: req.body.name})) {
+        return res.status(400).json({
+            message: `Store ${req.body.name} already exists!`
+        });
+    }
 
     // Create a new store
     const store = new Store({
         name: req.body.name
     });
-
     try {
 
         // Save the new store in the DB

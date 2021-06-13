@@ -1,5 +1,5 @@
 const User = require('../models/User');
-const { SECRET_KEY } = require('../config');
+const { SECRET_KEY } = require('../config/index');
 const { Strategy, ExtractJwt } = require('passport-jwt');
 
 const options = {
@@ -9,13 +9,13 @@ const options = {
 
 module.exports = passport => {
     passport.use(
-        new Strategy(options, async (payload, done) => {
+        new Strategy(options, async (payload, next) => {
             await User.findById(payload.id)
                 .then(user => {
-                    return user ? done(null, user) : done(null, false);
+                    return user ? next(null, user) : next(null, false);
                 })
                 .catch (err => {
-                    done(null, false);
+                    next(null, false);
                 });
         })
     );

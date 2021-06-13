@@ -1,4 +1,4 @@
-const cors = require('cors');
+//const cors = require('cors');
 const express = require('express');
 const mongoose = require('mongoose');
 const bp = require('body-parser');
@@ -17,12 +17,12 @@ const app = express();
 
 // Middlewares
 //app.use(express.json());
-var corsOptions = {
+/*var corsOptions = {
     origin: 'http://localhost:3001',
     optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
-}
+}*/
 
-app.use(cors(corsOptions));
+//app.use(cors(corsOptions));
 app.use(bp.json());
 app.use(passport.initialize());
 
@@ -77,3 +77,5 @@ const startApp = async () => {
 };
 
 startApp();
+
+module.exports = app;
